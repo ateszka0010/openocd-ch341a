@@ -1,0 +1,41 @@
+name: Windows Build
+
+on:
+  workflow_dispatch: # Lehetővé teszi, hogy kézzel indítsuk el a fordítást
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            make
+            autoconf
+            automake
+            libtool
+            pkg-config
+            mingw-w64-ucrt-x86_64-libusb
+
+      - name: Build OpenOCD
+        shell: msys2 {0}
+        run: |
+          ./bootstrap
+          ./configure --enable-ch341a --enable-internal-jimtcl --disable-werror
+          make
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openocd-ch341a-windows
+          path: src/openocd.exe
