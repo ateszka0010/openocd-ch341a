@@ -1,7 +1,7 @@
 name: Windows Build
 
 on:
-  workflow_dispatch: # Lehetővé teszi, hogy kézzel indítsuk el a fordítást
+  workflow_dispatch:
 
 jobs:
   build:
@@ -34,8 +34,19 @@ jobs:
           ./configure --enable-ch341a --enable-internal-jimtcl --disable-werror
           make
 
+      - name: Gather Application and DLLs
+        shell: msys2 {0}
+        run: |
+          mkdir dist
+          cp src/openocd.exe dist/
+          # Összemásoljuk az összes szükséges MSYS2 DLL fájlt az EXE mellé
+          cp /ucrt64/bin/libusb-1.0.dll dist/
+          cp /ucrt64/bin/libwinpthread-1.0.dll dist/
+          cp /ucrt64/bin/libgcc_s_ucrt64-1.dll dist/ || cp /ucrt64/bin/libgcc_s_seh-1.dll dist/
+          cp /ucrt64/bin/libstdc++-6.dll dist/
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openocd-ch341a-windows
-          path: src/openocd.exe
+          name: openocd-ch341a-complete
+          path: dist/
