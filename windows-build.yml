@@ -1,0 +1,42 @@
+name: Windows Build CH341A
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive  # Fontos a jimtcl és egyéb almodulok miatt
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            make
+            mingw-w64-x86_64-gcc
+            libtool
+            pkg-config
+            autoconf
+            automake
+            mingw-w64-x86_64-libusb
+            mingw-w64-x86_64-hidapi
+
+      - name: Build OpenOCD
+        shell: msys2 {0}
+        run: |
+          ./bootstrap
+          ./configure --enable-cmsis-dap --enable-ch341a --enable-stlink
+          make
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openocd-ch341a-bin
+          path: src/openocd.exe
