@@ -1,4 +1,4 @@
-name: Windows Build CH341A
+name: Windows Build
 
 on:
   workflow_dispatch:
@@ -7,36 +7,46 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive  # Fontos a jimtcl és egyéb almodulok miatt
+          submodules: recursive
 
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
           install: >-
             git
+            mingw-w64-ucrt-x86_64-gcc
             make
-            mingw-w64-x86_64-gcc
-            libtool
-            pkg-config
             autoconf
             automake
-            mingw-w64-x86_64-libusb
-            mingw-w64-x86_64-hidapi
+            libtool
+            pkg-config
+            mingw-w64-ucrt-x86_64-libusb
 
       - name: Build OpenOCD
         shell: msys2 {0}
         run: |
           ./bootstrap
-          ./configure --enable-cmsis-dap --enable-ch341a --enable-stlink
+          ./configure --enable-ch341a --enable-internal-jimtcl --disable-werror
           make
+
+      - name: Gather Application and DLLs
+        shell: msys2 {0}
+        run: |
+          mkdir dist
+          cp src/openocd.exe dist/
+          # Összemásoljuk az összes szükséges MSYS2 DLL fájlt az EXE mellé
+          cp /ucrt64/bin/libusb-1.0.dll dist/
+          cp /ucrt64/bin/libwinpthread-1.0.dll dist/
+          cp /ucrt64/bin/libgcc_s_ucrt64-1.dll dist/ || cp /ucrt64/bin/libgcc_s_seh-1.dll dist/
+          cp /ucrt64/bin/libstdc++-6.dll dist/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: openocd-ch341a-bin
-          path: src/openocd.exe
+          name: openocd-ch341a-complete
+          path: dist/
