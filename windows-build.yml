@@ -50,3 +50,4 @@ jobs:
         with:
           name: openocd-ch341a-complete
           path: dist/
+
