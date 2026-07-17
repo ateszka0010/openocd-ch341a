@@ -39,11 +39,11 @@ jobs:
         run: |
           mkdir dist
           cp src/openocd.exe dist/
-          # Összemásoljuk az összes szükséges MSYS2 DLL fájlt az EXE mellé
-          cp /ucrt64/bin/libusb-1.0.dll dist/
-          cp /ucrt64/bin/libwinpthread-1.0.dll dist/
-          cp /ucrt64/bin/libgcc_s_ucrt64-1.dll dist/ || cp /ucrt64/bin/libgcc_s_seh-1.dll dist/
-          cp /ucrt64/bin/libstdc++-6.dll dist/
+          # Összegyűjtjük a létező DLL-eket, de nem omlunk össze, ha valamelyik hiányzik
+          cp /ucrt64/bin/libusb-1.0.dll dist/ || true
+          cp /ucrt64/bin/libwinpthread-1.0.dll dist/ || true
+          cp /ucrt64/bin/libgcc_s_ucrt64-1.dll dist/ || cp /ucrt64/bin/libgcc_s_seh-1.dll dist/ || true
+          cp /ucrt64/bin/libstdc++-6.dll dist/ || true
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
